@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Evidencia de Campo - ESI</title>
+<style>
+  :root{
+    --azul:#0b3d66;
+    --azul-claro:#1568a6;
+    --azul-fondo:#eef4fa;
+    --gris:#4a5560;
+    --gris-claro:#f4f6f8;
+    --verde:#1c8a4c;
+    --rojo:#c62828;
+    --amarillo:#e0a800;
+    --borde:#d7dee5;
+    --blanco:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--gris-claro);
+    color:#1c2530;
+    -webkit-tap-highlight-color:transparent;
+  }
+  header{
+    background:var(--azul);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.3px;}
+  header .sub{font-size:11px;opacity:.85;margin-top:2px;}
+  .screen{display:none;padding:16px;max-width:520px;margin:0 auto;padding-bottom:100px;}
+  .screen.active{display:block;}
+
+  /* --- Config screen --- */
+  .card{
+    background:#fff;
+    border:1px solid var(--borde);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:14px;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--gris);
+    margin-bottom:6px;
+    margin-top:14px;
+  }
+  label:first-child{margin-top:0;}
+  select,input[type=text]{
+    width:100%;
+    padding:12px;
+    border:1.5px solid var(--borde);
+    border-radius:8px;
+    font-size:15px;
+    background:#fff;
+    color:#1c2530;
+  }
+  select:focus,input:focus{outline:none;border-color:var(--azul-claro);}
+  .logo-row{display:flex;align-items:center;gap:12px;margin-top:8px;}
+  .logo-preview{
+    width:52px;height:52px;border-radius:8px;border:1.5px dashed var(--borde);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+    background:#fafbfc;font-size:10px;color:#9aa5af;text-align:center;
+  }
+  .logo-preview img{width:100%;height:100%;object-fit:contain;}
+  .btn-secondary{
+    background:#fff;border:1.5px solid var(--borde);color:var(--gris);
+    padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .btn-primary{
+    width:100%;
+    background:var(--azul-claro);
+    color:#fff;
+    border:none;
+    padding:16px;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:700;
+    margin-top:20px;
+    cursor:pointer;
+    box-shadow:0 3px 8px rgba(21,104,166,.3);
+  }
+  .btn-primary:disabled{background:#a9bcca;box-shadow:none;}
+  .hint{font-size:12px;color:#8a95a0;margin-top:6px;line-height:1.4;}
+
+  /* --- Camera screen --- */
+  #screenCamera{padding:0;max-width:none;padding-bottom:0;}
+  .cam-wrap{position:relative;width:100%;background:#000;}
+  #video{width:100%;display:block;max-height:70vh;object-fit:cover;background:#000;}
+  #canvasHidden{display:none;}
+  .gps-badge{
+    position:absolute;top:10px;left:10px;right:10px;
+    display:flex;justify-content:space-between;align-items:center;
+    background:rgba(0,0,0,.55);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;
+  }
+  .gps-dot{width:9px;height:9px;border-radius:50%;background:var(--amarillo);display:inline-block;margin-right:6px;flex-shrink:0;}
+  .gps-dot.ok{background:var(--verde);}
+  .gps-dot.bad{background:var(--rojo);}
+  .cam-controls{
+    background:#111;
+    padding:18px 16px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+  }
+  .shutter{
+    width:74px;height:74px;border-radius:50%;
+    background:#fff;border:5px solid #444;
+    cursor:pointer;
+  }
+  .shutter:active{background:#ddd;}
+  .cam-meta{
+    padding:12px 16px;background:#fff;border-bottom:1px solid var(--borde);
+    font-size:12.5px;color:var(--gris);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  .cam-meta b{color:#1c2530;}
+  .close-cam{
+    position:absolute;left:16px;top:14px;background:rgba(255,255,255,.9);
+    border:none;border-radius:6px;padding:8px 10px;font-size:13px;font-weight:700;color:var(--azul);
+  }
+
+  /* --- Gallery screen --- */
+  .gallery-header{
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;
+  }
+  .gallery-header h2{font-size:15px;margin:0;color:var(--azul);}
+  .count-badge{
+    background:var(--azul-fondo);color:var(--azul);font-size:12px;font-weight:700;
+    padding:3px 10px;border-radius:20px;
+  }
+  .grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  }
+  .thumb{
+    background:#fff;border:1px solid var(--borde);border-radius:10px;overflow:hidden;
+  }
+  .thumb img{width:100%;height:130px;object-fit:cover;display:block;}
+  .thumb .info{padding:8px 10px;font-size:11px;color:var(--gris);}
+  .thumb .info b{display:block;font-size:12px;color:#1c2530;margin-bottom:2px;}
+  .thumb .actions{display:flex;border-top:1px solid var(--borde);}
+  .thumb .actions button{
+    flex:1;border:none;background:#fff;padding:9px 4px;font-size:11.5px;font-weight:700;color:var(--azul-claro);
+  }
+  .thumb .actions button:first-child{border-right:1px solid var(--borde);}
+  .thumb .actions button.del{color:var(--rojo);}
+  .empty-state{
+    text-align:center;color:#9aa5af;padding:50px 20px;font-size:13.5px;line-height:1.5;
+  }
+  .fab-bar{
+    position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--borde);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex;gap:10px;max-width:520px;margin:0 auto;
+  }
+  .fab-bar button{
+    flex:1;padding:13px;border-radius:9px;font-size:13.5px;font-weight:700;border:none;cursor:pointer;
+  }
+  .fab-camera{background:var(--azul-claro);color:#fff;}
+  .fab-share{background:var(--verde);color:#fff;}
+  .fab-download{background:#fff;color:var(--azul);border:1.5px solid var(--azul-claro) !important;}
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:#1c2530;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;
+    opacity:0;transition:opacity .25s;pointer-events:none;z-index:100;white-space:nowrap;
+  }
+  .toast.show{opacity:1;}
+  .nueva-sesion{
+    text-align:center;margin-top:16px;
+  }
+  .nueva-sesion a{color:var(--rojo);font-size:12.5px;font-weight:600;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Evidencia de Campo</h1>
+    <div class="sub" id="headerSub">Electronic Systems International S.A.</div>
+  </div>
+  <button class="btn-secondary" id="btnHome" style="display:none;font-size:12px;padding:7px 10px;">Config</button>
+</header>
+
+<!-- PANTALLA 1: CONFIGURACION -->
+<div class="screen active" id="screenConfig">
+  <div class="card">
+    <label>Técnico responsable</label>
+    <select id="selTecnico">
+      <option value="">Seleccionar...</option>
+      <option>Pier Ballón Coloma</option>
+      <option>Jonathan Gamio Piminchumo</option>
+      <option>John Rios Gomez</option>
+      <option>Jhunnior Vasquez Vasquez</option>
+      <option>Victor Soberon Tomasto</option>
+      <option>Ing. Víctor Encinas</option>
+      <option value="__otro__">Otro (escribir)...</option>
+    </select>
+    <input type="text" id="txtTecnicoOtro" placeholder="Nombre del técnico" style="display:none;margin-top:8px;">
+
+    <label>Cliente / Planta / Proyecto</label>
+    <input type="text" list="clientesList" id="txtCliente" placeholder="Ej: Alicorp - Molino Callao">
+    <datalist id="clientesList">
+      <option value="Alicorp S.A.A. - Molino Callao">
+      <option value="Alicorp S.A.A. - Molino Faucett">
+      <option value="Alicorp S.A.A. - COPSA">
+      <option value="Alicorp S.A.A. - Fidería">
+      <option value="Alicorp S.A.A. - Galletera">
+      <option value="Panificadora Bimbo del Perú S.A. - Callao">
+      <option value="Pesquera Austral Group S.A.C.">
+    </datalist>
+
+    <label>Logo (opcional, se imprime en el sello)</label>
+    <div class="logo-row">
+      <div class="logo-preview" id="logoPreview">Sin logo</div>
+      <label class="btn-secondary" for="fileLogo" style="cursor:pointer;">Subir logo</label>
+      <input type="file" accept="image/*" id="fileLogo" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;">
+      <button class="btn-secondary" id="btnLogoClear" style="display:none;">Quitar</button>
+    </div>
+    <div class="hint">El logo se recuerda en este dispositivo para la próxima vez.</div>
+
+    <button class="btn-primary" id="btnIniciar" disabled>Iniciar sesión de evidencias</button>
+    <div class="hint" id="hintSesionPrevia" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- PANTALLA 2: CAMARA -->
+<div class="screen" id="screenCamera">
+  <div class="cam-meta">
+    <div>👤 <b id="metaTecnico">-</b></div>
+    <div>🏭 <b id="metaCliente">-</b></div>
+  </div>
+  <div class="cam-wrap">
+    <button class="close-cam" id="btnCerrarCam">✕ Cerrar cámara</button>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="gps-badge">
+      <span><span class="gps-dot" id="gpsDot"></span><span id="gpsText">Obteniendo ubicación...</span></span>
+      <span id="gpsAcc"></span>
+    </div>
+  </div>
+  <div class="cam-controls">
+    <div class="shutter" id="btnCapturar"></div>
+  </div>
+</div>
+<canvas id="canvasHidden"></canvas>
+
+<!-- PANTALLA 3: GALERIA -->
+<div class="screen" id="screenGaleria">
+  <div class="gallery-header">
+    <h2 id="galeriaTitulo">Fotos de la sesión</h2>
+    <span class="count-badge"><span id="galeriaCount">0</span> fotos</span>
+  </div>
+  <div id="galeriaVacia" class="empty-state">
+    Aún no has tomado fotos.<br>Toca "Tomar foto" abajo para empezar.
+  </div>
+  <div class="grid" id="galeriaGrid"></div>
+
+  <div class="nueva-sesion">
+    <a href="#" id="linkNuevaSesion">Terminar y empezar una nueva sesión</a>
+  </div>
+</div>
+
+<div class="fab-bar" id="fabBar">
+  <button class="fab-camera" id="fabCamera">📷 Tomar foto</button>
+  <button class="fab-share" id="fabShareAll">Compartir todas</button>
+  <button class="fab-download" id="fabDownloadAll">Descargar todas</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Estado ----------
+  var state = {
+    tecnico:"", cliente:"", logoDataUrl:null,
+    fotos:[], // {id, dataUrl, fecha, coords, tecnico, cliente}
+    stream:null, lastPos:null, watchId:null
+  };
+
+  var STORAGE_KEY = "esi_evidencia_campo_v1";
+
+  // ---------- Utilidades ----------
+  function $(id){ return document.getElementById(id); }
+  function showScreen(id){
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    $(id).classList.add("active");
+    $("btnHome").style.display = (id==="screenConfig") ? "none" : "inline-block";
+    $("fabBar").style.display = (id==="screenGaleria") ? "flex" : "none";
+  }
+  function toast(msg){
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+  function pad(n){ return n<10 ? "0"+n : ""+n; }
+  function formatFecha(d){
+    return pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear()+"  "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
+  }
+  function persist(){
+    try{
+      var toSave = {
+        tecnico: state.tecnico, cliente: state.cliente, logoDataUrl: state.logoDataUrl,
+        fotos: state.fotos
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }catch(e){ console.warn("No se pudo guardar sesión local:", e); }
+  }
+  function loadPersisted(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null; }
+  }
+
+  // ---------- Config screen ----------
+  var selTecnico = $("selTecnico"), txtTecnicoOtro = $("txtTecnicoOtro"), txtCliente = $("txtCliente");
+  var fileLogo = $("fileLogo"), logoPreview = $("logoPreview"), btnLogoClear = $("btnLogoClear");
+  var btnIniciar = $("btnIniciar");
+
+  function validarConfig(){
+    var tecnicoOk = selTecnico.value && (selTecnico.value !== "__otro__" || txtTecnicoOtro.value.trim());
+    var clienteOk = txtCliente.value.trim().length > 0;
+    btnIniciar.disabled = !(tecnicoOk && clienteOk);
+  }
+  selTecnico.addEventListener("change", function(){
+    txtTecnicoOtro.style.display = (selTecnico.value === "__otro__") ? "block" : "none";
+    validarConfig();
+  });
+  txtTecnicoOtro.addEventListener("input", validarConfig);
+  txtCliente.addEventListener("input", validarConfig);
+
+  fileLogo.addEventListener("change", function(e){
+    var f = e.target.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      state.logoDataUrl = ev.target.result;
+      logoPreview.innerHTML = '<img src="'+ev.target.result+'">';
+      btnLogoClear.style.display = "inline-block";
+      persist();
+    };
+    reader.readAsDataURL(f);
+  });
+  btnLogoClear.addEventListener("click", function(){
+    state.logoDataUrl = null;
+    logoPreview.innerHTML = "Sin logo";
+    btnLogoClear.style.display = "none";
+    persist();
+  });
+
+  btnIniciar.addEventListener("click", function(){
+    state.tecnico = (selTecnico.value === "__otro__") ? txtTecnicoOtro.value.trim() : selTecnico.value;
+    state.cliente = txtCliente.value.trim();
+    persist();
+    actualizarGaleriaHeader();
+    iniciarGPS();
+    showScreen("screenGaleria");
+    renderGaleria();
+  });
+
+  $("btnHome").addEventListener("click", function(){
+    showScreen("screenConfig");
+  });
+
+  function actualizarGaleriaHeader(){
+    $("metaTecnico").textContent = state.tecnico || "-";
+    $("metaCliente").textContent = state.cliente || "-";
+    $("galeriaTitulo").textContent = state.cliente || "Fotos de la sesión";
+    $("headerSub").textContent = state.tecnico ? (state.tecnico + " · " + state.cliente) : "Electronic Systems International S.A.";
+  }
+
+  // Cargar sesión previa si existe
+  (function initFromStorage(){
+    var saved = loadPersisted();
+    if(saved && (saved.fotos && saved.fotos.length)){
+      $("hintSesionPrevia").style.display = "block";
+      $("hintSesionPrevia").innerHTML = 'Hay una sesión guardada de <b>'+(saved.tecnico||"-")+'</b> en <b>'+(saved.cliente||"-")+'</b> con '+saved.fotos.length+' foto(s). <a href="#" id="linkRestaurar">Continuarla</a>.';
+      document.getElementById("linkRestaurar") && document.getElementById("linkRestaurar").addEventListener("click", function(e){});
+    }
+    if(saved){
+      setTimeout(function(){
+        var link = $("hintSesionPrevia").querySelector("#linkRestaurar");
+        if(link){
+          link.addEventListener("click", function(e){
+            e.preventDefault();
+            state.tecnico = saved.tecnico; state.cliente = saved.cliente;
+            state.logoDataUrl = saved.logoDataUrl; state.fotos = saved.fotos || [];
+            if(state.logoDataUrl){ logoPreview.innerHTML = '<img src="'+state.logoDataUrl+'">'; btnLogoClear.style.display="inline-block"; }
+            actualizarGaleriaHeader();
+            iniciarGPS();
+            showScreen("screenGaleria");
+            renderGaleria();
+          });
+        }
+      }, 0);
+    }
+  })();
+
+  // ---------- GPS ----------
+  var gpsDot = $("gpsDot"), gpsText = $("gpsText"), gpsAcc = $("gpsAcc");
+  function iniciarGPS(){
+    if(!navigator.geolocation){
+      gpsText.textContent = "GPS no disponible en este navegador";
+      gpsDot.className = "gps-dot bad";
+      return;
+    }
+    if(state.watchId) return;
+    gpsDot.className = "gps-dot";
+    gpsText.textContent = "Obteniendo ubicación...";
+    state.watchId = navigator.geolocation.watchPosition(function(pos){
+      state.lastPos = pos;
+      gpsDot.className = "gps-dot ok";
+      gpsText.textContent = pos.coords.latitude.toFixed(6) + ", " + pos.coords.longitude.toFixed(6);
+      gpsAcc.textContent = "±" + Math.round(pos.coords.accuracy) + "m";
+    }, function(err){
+      gpsDot.className = "gps-dot bad";
+      gpsText.textContent = "Sin señal GPS (" + err.message + ")";
+    }, { enableHighAccuracy:true, maximumAge:4000, timeout:15000 });
+  }
+
+  // ---------- Camara ----------
+  var video = $("video");
+  function abrirCamara(){
+    showScreen("screenCamera");
+    if(state.stream){ return; }
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment", width:{ideal:1920}, height:{ideal:1080} }, audio:false })
+      .then(function(stream){
+        state.stream = stream;
+        video.srcObject = stream;
+      })
+      .catch(function(err){
+        toast("No se pudo abrir la cámara: " + err.message);
+        showScreen("screenGaleria");
+      });
+  }
+  function cerrarCamara(){
+    if(state.stream){
+      state.stream.getTracks().forEach(function(t){ t.stop(); });
+      state.stream = null;
+    }
+    showScreen("screenGaleria");
+  }
+  $("fabCamera").addEventListener("click", abrirCamara);
+  $("btnCerrarCam").addEventListener("click", cerrarCamara);
+
+  // ---------- Captura + sello ----------
+  var canvas = $("canvasHidden");
+  function capturar(){
+    if(!video.videoWidth){ toast("La cámara aún está cargando..."); return; }
+    var w = video.videoWidth, h = video.videoHeight;
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, w, h);
+
+    var now = new Date();
+    var coordsTxt = state.lastPos
+      ? state.lastPos.coords.latitude.toFixed(6) + ", " + state.lastPos.coords.longitude.toFixed(6) + "  (±" + Math.round(state.lastPos.coords.accuracy) + "m)"
+      : "Ubicación no disponible";
+
+    // Barra de sello inferior
+    var barH = Math.round(h * 0.155);
+    var barY = h - barH;
+    var grad = ctx.createLinearGradient(0, barY, 0, h);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(0.35, "rgba(0,0,0,0.72)");
+    grad.addColorStop(1, "rgba(0,0,0,0.82)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, barY, w, barH);
+
+    var pad = Math.round(w * 0.025);
+    var fsBig = Math.round(h * 0.028);
+    var fsSmall = Math.round(h * 0.021);
+    var lineGap = fsBig * 1.35;
+
+    var textX = pad;
+    if(state.logoDataUrl){
+      textX = pad; // logo se dibuja aparte, texto arriba a la izquierda igual
+    }
+
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 " + fsBig + "px Arial";
+    ctx.fillText(formatFecha(now), textX, barY + lineGap);
+
+    ctx.font = "600 " + fsSmall + "px Arial";
+    ctx.fillText("GPS: " + coordsTxt, textX, barY + lineGap + fsSmall*1.5);
+    ctx.fillText("Técnico: " + state.tecnico, textX, barY + lineGap + fsSmall*3.0);
+    ctx.fillText("Cliente/Proyecto: " + state.cliente, textX, barY + lineGap + fsSmall*4.5);
+
+    function finalizarCaptura(){
+      var dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      var foto = {
+        id: "f" + Date.now() + Math.random().toString(36).slice(2,7),
+        dataUrl: dataUrl,
+        fecha: now.toISOString(),
+        fechaLegible: formatFecha(now),
+        coords: coordsTxt,
+        tecnico: state.tecnico,
+        cliente: state.cliente
+      };
+      state.fotos.unshift(foto);
+      persist();
+      renderGaleria();
+      toast("Foto guardada en la sesión");
+      cerrarCamara();
+    }
+
+    if(state.logoDataUrl){
+      var img = new Image();
+      img.onload = function(){
+        var logoH = barH * 0.62;
+        var logoW = logoH * (img.width / img.height);
+        ctx.drawImage(img, w - pad - logoW, barY + (barH-logoH)/2, logoW, logoH);
+        finalizarCaptura();
+      };
+      img.onerror = finalizarCaptura;
+      img.src = state.logoDataUrl;
+    } else {
+      finalizarCaptura();
+    }
+  }
+  $("btnCapturar").addEventListener("click", capturar);
+
+  // ---------- Galeria ----------
+  function renderGaleria(){
+    var grid = $("galeriaGrid");
+    var vacia = $("galeriaVacia");
+    $("galeriaCount").textContent = state.fotos.length;
+    if(state.fotos.length === 0){
+      grid.innerHTML = "";
+      vacia.style.display = "block";
+      return;
+    }
+    vacia.style.display = "none";
+    grid.innerHTML = state.fotos.map(function(f){
+      return '<div class="thumb" data-id="'+f.id+'">'
+        + '<img src="'+f.dataUrl+'">'
+        + '<div class="info"><b>'+f.fechaLegible+'</b>'+ (f.coords||"") +'</div>'
+        + '<div class="actions">'
+          + '<button class="dl">Descargar</button>'
+          + '<button class="sh">Compartir</button>'
+        + '</div>'
+        + '<div class="actions"><button class="del" style="width:100%;">Eliminar</button></div>'
+      + '</div>';
+    }).join("");
+
+    grid.querySelectorAll(".thumb").forEach(function(el){
+      var id = el.getAttribute("data-id");
+      var foto = state.fotos.find(function(f){ return f.id === id; });
+      el.querySelector(".dl").addEventListener("click", function(){ descargarFoto(foto); });
+      el.querySelector(".sh").addEventListener("click", function(){ compartirFotos([foto]); });
+      el.querySelector(".del").addEventListener("click", function(){
+        if(confirm("¿Eliminar esta foto de la sesión?")){
+          state.fotos = state.fotos.filter(function(f){ return f.id !== id; });
+          persist();
+          renderGaleria();
+        }
+      });
+    });
+  }
+
+  function nombreArchivo(foto){
+    var safeCliente = (foto.cliente||"cliente").replace(/[^a-z0-9]+/gi,"_").slice(0,30);
+    var safeTecnico = (foto.tecnico||"tecnico").replace(/[^a-z0-9]+/gi,"_").slice(0,20);
+    var d = new Date(foto.fecha);
+    var ts = d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+    return "ESI_"+safeCliente+"_"+safeTecnico+"_"+ts+".jpg";
+  }
+
+  function dataUrlToBlob(dataUrl){
+    var parts = dataUrl.split(",");
+    var mime = parts[0].match(/:(.*?);/)[1];
+    var bstr = atob(parts[1]);
+    var n = bstr.length;
+    var u8 = new Uint8Array(n);
+    while(n--){ u8[n] = bstr.charCodeAt(n); }
+    return new Blob([u8], { type: mime });
+  }
+
+  function descargarFoto(foto){
+    var a = document.createElement("a");
+    a.href = foto.dataUrl;
+    a.download = nombreArchivo(foto);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast("Descargando foto...");
+  }
+
+  function compartirFotos(fotos){
+    if(!navigator.share){
+      toast("Este navegador no permite compartir directo. Usa Descargar.");
+      return;
+    }
+    var files = fotos.map(function(f){
+      return new File([dataUrlToBlob(f.dataUrl)], nombreArchivo(f), { type: "image/jpeg" });
+    });
+    var shareData = {
+      files: files,
+      title: "Evidencia de campo ESI",
+      text: (state.cliente||"") + " - " + (state.tecnico||"")
+    };
+    if(navigator.canShare && !navigator.canShare(shareData)){
+      toast("El navegador no puede compartir estos archivos. Usa Descargar.");
+      return;
+    }
+    navigator.share(shareData).catch(function(err){
+      if(err && err.name !== "AbortError") toast("No se pudo compartir: " + err.message);
+    });
+  }
+
+  $("fabShareAll").addEventListener("click", function(){
+    if(state.fotos.length === 0){ toast("No hay fotos en la sesión"); return; }
+    compartirFotos(state.fotos);
+  });
+  $("fabDownloadAll").addEventListener("click", function(){
+    if(state.fotos.length === 0){ toast("No hay fotos en la sesión"); return; }
+    state.fotos.forEach(function(f, i){
+      setTimeout(function(){ descargarFoto(f); }, i*350);
+    });
+  });
+
+  $("linkNuevaSesion").addEventListener("click", function(e){
+    e.preventDefault();
+    if(state.fotos.length > 0 && !confirm("¿Terminar la sesión actual? Asegúrate de haber descargado o compartido tus fotos primero.")) return;
+    state.fotos = [];
+    state.tecnico = ""; state.cliente = "";
+    selTecnico.value = ""; txtTecnicoOtro.value=""; txtTecnicoOtro.style.display="none"; txtCliente.value = "";
+    localStorage.removeItem(STORAGE_KEY);
+    validarConfig();
+    showScreen("screenConfig");
+  });
+
+})();
+</script>
+</body>
+</html>
